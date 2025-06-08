@@ -1,0 +1,97 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Book, BookOpen, Home, Search, Sparkles, User } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { ModeToggle } from "@/components/ModeToggle"
+
+export function Navbar() {
+  const pathname = usePathname()
+
+  const navItems = [
+    { name: "Inicio", href: "/", icon: Home },
+    { name: "Definiciones", href: "/definiciones", icon: Book },
+    { name: "Curiosidades", href: "/curiosidades", icon: Sparkles },
+    { name: "Palabra del día", href: "/palabra-del-dia", icon: BookOpen },
+    { name: "Adivinanza", href: "/adivinanza", icon: Search },
+    { name: "Entretenimiento", href: "/entretenimiento", icon: User },
+  ]
+
+  return (
+    <header className="border-b sticky top-0 z-40 bg-background">
+      <div className="flex-1 container mx-auto p-4 flex items-center justify-between">
+        <div className="flex items-center gap-6 md:gap-10">
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="text-xl font-bold">
+              Litera<span className="text-rose-500">tuya</span>
+            </span>
+          </Link>
+          <nav className="hidden md:flex gap-6">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center text-sm font-medium transition-colors hover:text-foreground/80",
+                    isActive ? "text-foreground" : "text-foreground/60",
+                  )}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="hidden md:flex">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/buscar">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Buscar</span>
+              </Link>
+            </Button>
+            <ModeToggle />
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/login">Iniciar sesión</Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/registro">Registrarse</Link>
+          </Button>
+        </div>
+      </div>
+      <div className="md:hidden border-t">
+        <nav className="flex justify-between px-2">
+          {navItems.slice(0, 4).map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-1 flex-col items-center justify-center py-2 text-xs font-medium transition-colors hover:text-foreground/80",
+                  isActive ? "text-foreground" : "text-foreground/60",
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.name}</span>
+              </Link>
+            )
+          })}
+          <Link
+            href="/perfil"
+            className="flex flex-1 flex-col items-center justify-center py-2 text-xs font-medium text-foreground/60 transition-colors hover:text-foreground/80"
+          >
+            <User className="h-5 w-5" />
+            <span>Perfil</span>
+          </Link>
+        </nav>
+      </div>
+    </header>
+  )
+}
