@@ -65,7 +65,13 @@ export default function GuessGamePage() {
     setGameStatus("playing")
     setHintsUsed(0)
     setPoints(0)
-    // Aquí cargarías una nueva palabra
+    setCurrentWord({
+      id: 2,
+      word: "NUEVA_PALABRA",
+      definition: "Nueva definición",
+      literaturiaDefinition: "Nueva definición literatuya",
+      hints: ["Nueva pista 1", "Nueva pista 2", "Nueva pista 3", "Nueva pista 4"]
+    })
   }
 
   return (

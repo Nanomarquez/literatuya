@@ -2,13 +2,13 @@ import { Navbar } from "@/components/Navbar"
 import { SearchBar } from "@/components/SearchBar"
 import { SearchResults } from "@/components/SearchResults"
 import { Footer } from "@/components/Footer"
-
-export default function SearchPage({
+export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { q: string }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const query = searchParams.q || ""
+  const params = await searchParams
+  const query = Array.isArray(params.q) ? params.q[0] : params.q || ""
 
   return (
     <main className="min-h-screen flex flex-col">
