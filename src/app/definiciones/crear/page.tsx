@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -26,11 +26,28 @@ const categories = [
   "Otros",
 ];
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function CreateDefinitionPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [searchingRAE, setSearchingRAE] = useState(false);
   const [formData, setFormData] = useState({
     word: "",
     raeDefinition: "",
@@ -38,12 +55,77 @@ export default function CreateDefinitionPage() {
     category: "",
   });
 
+  const debouncedWord = useDebounce(formData.word, 1000);
+
+  const searchRAEDefinition = useCallback(
+    async (word: string) => {
+      if (!word.trim()) return;
+
+      setSearchingRAE(true);
+      try {
+        const response = await fetch(
+          `/api/rae?word=${encodeURIComponent(word)}`
+        );
+        const data = await response.json();
+
+        if (data.ok && data.data.meanings && data.data.meanings.length > 0) {
+          const firstMeaning = data.data.meanings[0];
+          const definition = firstMeaning.senses[0].raw;
+
+          setFormData((prev) => ({
+            ...prev,
+            raeDefinition: definition,
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            raeDefinition: "",
+          }));
+          toast({
+            title: "No encontrado",
+            description: "No se encontró la palabra en la RAE",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        setFormData((prev) => ({
+          ...prev,
+          raeDefinition: "",
+        }));
+        toast({
+          title: "Error",
+          description: "Error al buscar en la RAE",
+          variant: "destructive",
+        });
+      } finally {
+        setSearchingRAE(false);
+      }
+    },
+    [toast]
+  );
+
+  useEffect(() => {
+    if (debouncedWord) {
+      searchRAEDefinition(debouncedWord);
+    }
+  }, [debouncedWord, searchRAEDefinition]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) {
       toast({
         title: "Error",
         description: "Debes iniciar sesión para crear una definición",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.category) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar una categoría",
         variant: "destructive",
       });
       return;
@@ -78,6 +160,14 @@ export default function CreateDefinitionPage() {
     }
   };
 
+  const handleWordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      word: value,
+    }));
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -99,7 +189,7 @@ export default function CreateDefinitionPage() {
     <main className="min-h-screen flex flex-col">
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
-        <h1 className="text-3xl font-bold mb-8">Crear Nueva Definición</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-8">Crear Nueva Definición</h1>
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
           <div className="space-y-2">
@@ -111,21 +201,21 @@ export default function CreateDefinitionPage() {
               name="word"
               required
               value={formData.word}
-              onChange={handleChange}
+              onChange={handleWordChange}
               placeholder="Escribe la palabra que quieres definir"
             />
           </div>
 
           <div className="space-y-2">
             <label htmlFor="raeDefinition" className="text-sm font-medium">
-              Definición RAE (opcional)
+              Definición RAE {searchingRAE && "(Buscando...)"}
             </label>
             <Textarea
               id="raeDefinition"
               name="raeDefinition"
               value={formData.raeDefinition}
               onChange={handleChange}
-              placeholder="Si existe en la RAE, escribe su definición"
+              placeholder="La definición de la RAE aparecerá automáticamente si existe"
             />
           </div>
 
