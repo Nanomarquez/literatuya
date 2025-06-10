@@ -10,12 +10,14 @@ import {
   doc,
   updateDoc,
   increment,
-  getDoc
+  getDoc,
+  deleteDoc
 } from 'firebase/firestore';
 
 export interface Definition {
   id: string;
   word: string;
+  wordLowerCase: string;
   raeDefinition?: string;
   literaturiaDefinition: string;
   authorId: string;
@@ -39,10 +41,11 @@ export interface Comment {
   createdAt: string;
 }
 
-export const createDefinition = async (definition: Omit<Definition, 'id' | 'votes' | 'comments' | 'createdAt' | 'updatedAt'>) => {
+export const createDefinition = async (definition: Omit<Definition, 'id' | 'votes' | 'comments' | 'createdAt' | 'updatedAt' | 'wordLowerCase'>) => {
   try {
     const docRef = await addDoc(collection(db, 'definitions'), {
       ...definition,
+      wordLowerCase: definition.word.toLowerCase(),
       votes: 0,
       comments: 0,
       createdAt: new Date().toISOString(),
@@ -74,8 +77,9 @@ export const getDefinitions = async (filters?: {
     }
 
     if (filters?.search) {
-      constraints.push(where('word', '>=', filters.search));
-      constraints.push(where('word', '<=', filters.search + '\uf8ff'));
+      const searchTerm = filters.search.toLowerCase();
+      constraints.push(where('wordLowerCase', '>=', searchTerm));
+      constraints.push(where('wordLowerCase', '<=', searchTerm + '\uf8ff'));
     }
 
     if (filters?.trending) {
@@ -98,14 +102,53 @@ export const getDefinitions = async (filters?: {
   }
 };
 
-export const voteDefinition = async (definitionId: string) => {
+export const voteDefinition = async (definitionId: string, userId: string) => {
   try {
+    // Primero verificamos si el usuario ya votó
+    const voteQuery = query(
+      collection(db, 'votes'),
+      where('definitionId', '==', definitionId),
+      where('userId', '==', userId)
+    );
+    const voteSnapshot = await getDocs(voteQuery);
+    
     const definitionRef = doc(db, 'definitions', definitionId);
-    await updateDoc(definitionRef, {
-      votes: increment(1)
-    });
+    
+    if (voteSnapshot.empty) {
+      // Si no ha votado, agregamos el voto
+      await addDoc(collection(db, 'votes'), {
+        definitionId,
+        userId,
+        createdAt: new Date().toISOString()
+      });
+      await updateDoc(definitionRef, {
+        votes: increment(1)
+      });
+      return true; // indicador de que se agregó el voto
+    } else {
+      // Si ya votó, removemos el voto
+      const voteDoc = voteSnapshot.docs[0];
+      await deleteDoc(doc(db, 'votes', voteDoc.id));
+      await updateDoc(definitionRef, {
+        votes: increment(-1)
+      });
+      return false; // indicador de que se removió el voto
+    }
   } catch (error) {
-    console.error('Error al votar la definición:', error);
+    throw error;
+  }
+};
+
+export const hasUserVoted = async (definitionId: string, userId: string): Promise<boolean> => {
+  try {
+    const voteQuery = query(
+      collection(db, 'votes'),
+      where('definitionId', '==', definitionId),
+      where('userId', '==', userId)
+    );
+    const voteSnapshot = await getDocs(voteQuery);
+    return !voteSnapshot.empty;
+  } catch (error) {
     throw error;
   }
 };

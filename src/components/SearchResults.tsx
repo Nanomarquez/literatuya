@@ -8,56 +8,44 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Definition, getDefinitions } from "@/lib/definitions";
+import { useEffect, useState } from "react";
+import Loader from "./Loader";
 
 export function SearchResults({ query }: { query: string }) {
-  // Estos serían datos que vendrían de una base de datos basados en la búsqueda
-  const results = [
-    {
-      id: 1,
-      word: "Serendipia",
-      definition:
-        "Hallazgo valioso que se produce de manera accidental o casual.",
-      literaturiaDefinition:
-        "Ese momento mágico cuando encuentras algo genial sin buscarlo, como cuando buscas calcetines y encuentras dinero.",
-      example:
-        "Descubrió su vocación por serendipia mientras ayudaba a un amigo.",
-      category: "Palabras bonitas",
-      votes: 342,
-      type: "official",
-    },
-    {
-      id: 7,
-      word: "Serendipitoso",
-      definition: "No existe en la RAE",
-      literaturiaDefinition:
-        "Persona que constantemente tiene experiencias de serendipia, como si la casualidad fuera su mejor amiga.",
-      example:
-        "Mi tío es tan serendipitoso que fue a comprar pan y volvió con un trabajo nuevo.",
-      category: "Personalidad",
-      votes: 156,
-      type: "community",
-    },
-    {
-      id: 8,
-      word: "Serendipear",
-      definition: "No existe en la RAE",
-      literaturiaDefinition:
-        "Verbo que describe la acción de encontrar cosas valiosas sin buscarlas intencionalmente.",
-      example: "Me encanta serendipear por librerías de segunda mano.",
-      category: "Acciones",
-      votes: 89,
-      type: "community",
-    },
-  ];
+  const [definitions, setDefinitions] = useState<Definition[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const officialResults = results.filter((item) => item.type === "official");
-  const communityResults = results.filter((item) => item.type === "community");
+  useEffect(() => {
+    const fetchDefinitions = async () => {
+      try {
+        setLoading(true);
+        const data = await getDefinitions({ search: query });
+        setDefinitions(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDefinitions();
+  }, [query]);
+
+  const officialResults = definitions.filter((item) => item.isOfficial);
+  const communityResults = definitions.filter((item) => !item.isOfficial);
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Resultados para &quot;{query}&quot;</h2>
-        <Badge variant="outline">{results.length} resultados</Badge>
+        <h2 className="text-2xl font-semibold">
+          Resultados para &quot;{query}&quot;
+        </h2>
+        <Badge variant="outline">{definitions.length} resultados</Badge>
       </div>
 
       <Tabs defaultValue="all">
@@ -70,15 +58,15 @@ export function SearchResults({ query }: { query: string }) {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {results.map((result) => (
-            <ResultCard key={result.id} result={result} />
+          {definitions.map((definition) => (
+            <ResultCard key={definition.id} definition={definition} />
           ))}
         </TabsContent>
 
         <TabsContent value="official" className="space-y-4">
           {officialResults.length > 0 ? (
-            officialResults.map((result) => (
-              <ResultCard key={result.id} result={result} />
+            officialResults.map((definition) => (
+              <ResultCard key={definition.id} definition={definition} />
             ))
           ) : (
             <p className="text-center py-8 text-muted-foreground">
@@ -89,12 +77,13 @@ export function SearchResults({ query }: { query: string }) {
 
         <TabsContent value="community" className="space-y-4">
           {communityResults.length > 0 ? (
-            communityResults.map((result) => (
-              <ResultCard key={result.id} result={result} />
+            communityResults.map((definition) => (
+              <ResultCard key={definition.id} definition={definition} />
             ))
           ) : (
             <p className="text-center py-8 text-muted-foreground">
-              No se encontraron definiciones de la comunidad para &quot;{query}&quot;
+              No se encontraron definiciones de la comunidad para &quot;{query}
+              &quot;
             </p>
           )}
         </TabsContent>
@@ -103,46 +92,41 @@ export function SearchResults({ query }: { query: string }) {
   );
 }
 
-function ResultCard({ result }: { result: {
-  id: number;
-  word: string;
-  definition: string;
-  literaturiaDefinition: string;
-  example: string;
-  category: string;
-  votes: number;
-  type: string;
-} }) {
+function ResultCard({ definition }: { definition: Definition }) {
   return (
-    <Link href={`/palabra/${result.id}`}>
+    <Link href={`/palabra/${definition.id}`}>
       <Card className="transition-all hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl">{result.word}</CardTitle>
-              <CardDescription>{result.category}</CardDescription>
+              <CardTitle className="text-xl">{definition.word}</CardTitle>
+              <CardDescription>{definition.category}</CardDescription>
             </div>
             <div className="flex gap-2">
-              {result.type === "community" && (
+              {!definition.isOfficial && (
                 <Badge variant="secondary">Comunidad</Badge>
               )}
-              <Badge variant="outline">{result.votes} votos</Badge>
+              <Badge variant="outline">{definition.votes} votos</Badge>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {result.type === "official" && (
+          {definition.raeDefinition && (
             <p className="text-sm text-muted-foreground mb-2">
-              <span className="font-semibold">RAE:</span> {result.definition}
+              <span className="font-semibold">RAE:</span>{" "}
+              {definition.raeDefinition}
             </p>
           )}
           <p className="text-sm mb-2">
             <span className="font-semibold">Literatuya:</span>{" "}
-            {result.literaturiaDefinition}
+            {definition.literaturiaDefinition}
           </p>
-          <p className="text-sm italic text-muted-foreground">
-            <span className="font-semibold">Ejemplo:</span> {result.example}
-          </p>
+          {/* {definition.example && (
+            <p className="text-sm italic text-muted-foreground">
+              <span className="font-semibold">Ejemplo:</span>{" "}
+              {definition.example}
+            </p>
+          )} */}
         </CardContent>
       </Card>
     </Link>

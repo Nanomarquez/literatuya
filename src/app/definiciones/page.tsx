@@ -18,9 +18,10 @@ import { Plus, Search, ThumbsUp, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Definition, getDefinitions } from "@/lib/definitions";
-import { useToast } from "@/app/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import Loader from "@/components/Loader";
 
-interface DefinitionFilters {
+export interface DefinitionFilters {
   isOfficial?: boolean;
   trending?: boolean;
   search?: string;
@@ -131,7 +132,7 @@ export default function DefinitionsPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
             {loading ? (
-              <div>Cargando...</div>
+              <Loader />
             ) : definitions.length === 0 ? (
               <div className="col-span-2 text-center py-8 text-muted-foreground">
                 No se encontraron definiciones

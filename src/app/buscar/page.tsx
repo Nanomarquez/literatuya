@@ -1,14 +1,13 @@
-import { Navbar } from "@/components/Navbar"
-import { SearchBar } from "@/components/SearchBar"
-import { SearchResults } from "@/components/SearchResults"
-import { Footer } from "@/components/Footer"
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
-  const params = await searchParams
-  const query = Array.isArray(params.q) ? params.q[0] : params.q || ""
+"use client";
+import { Navbar } from "@/components/Navbar";
+import { SearchBar } from "@/components/SearchBar";
+import { SearchResults } from "@/components/SearchResults";
+import { Footer } from "@/components/Footer";
+import { useSearchParams } from "next/navigation";
+
+export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") || "";
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -22,14 +21,17 @@ export default async function SearchPage({
           <SearchResults query={query} />
         ) : (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold mb-2">Realiza una búsqueda</h2>
+            <h2 className="text-2xl font-semibold mb-2">
+              Realiza una búsqueda
+            </h2>
             <p className="text-muted-foreground">
-              Ingresa una palabra o frase para descubrir definiciones y curiosidades
+              Ingresa una palabra o frase para descubrir definiciones y
+              curiosidades
             </p>
           </div>
         )}
       </div>
       <Footer />
     </main>
-  )
+  );
 }

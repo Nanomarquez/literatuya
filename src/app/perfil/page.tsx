@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/app/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
   // Estos serían datos que vendrían de una base de datos

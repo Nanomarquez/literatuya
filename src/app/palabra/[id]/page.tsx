@@ -18,8 +18,10 @@ import {
   addComment,
   getDefinition,
   getComments,
+  hasUserVoted,
 } from "@/lib/definitions";
-import { useToast } from "@/app/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import Loader from "@/components/Loader";
 
 interface Comment {
   id: string;
@@ -39,6 +41,7 @@ export default function DefinitionPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
     const fetchDefinition = async () => {
@@ -47,6 +50,12 @@ export default function DefinitionPage() {
         setDefinition(def);
         const coms = await getComments(id as string);
         setComments(coms);
+
+        // Verificar si el usuario ya votó
+        if (user) {
+          const voted = await hasUserVoted(id as string, user.uid);
+          setHasVoted(voted);
+        }
       } catch (error) {
         console.error(error);
         toast({
@@ -60,7 +69,7 @@ export default function DefinitionPage() {
     };
 
     fetchDefinition();
-  }, [id, toast]);
+  }, [id, toast, user]);
 
   const handleVote = async () => {
     if (!user) {
@@ -73,22 +82,23 @@ export default function DefinitionPage() {
     }
 
     try {
-      await voteDefinition(id as string);
+      const voted = await voteDefinition(id as string, user.uid);
       if (definition) {
         setDefinition({
           ...definition,
-          votes: definition.votes + 1,
+          votes: definition.votes + (voted ? 1 : -1),
         });
       }
+      setHasVoted(voted);
       toast({
-        title: "¡Voto registrado!",
-        description: "Gracias por tu voto",
+        title: voted ? "¡Voto registrado!" : "¡Voto removido!",
+        description: voted ? "Gracias por tu voto" : "Has quitado tu voto",
       });
     } catch (error) {
       console.error(error);
       toast({
         title: "Error",
-        description: "No se pudo registrar tu voto",
+        description: "No se pudo procesar tu voto",
         variant: "destructive",
       });
     }
@@ -141,7 +151,7 @@ export default function DefinitionPage() {
   };
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return <Loader />;
   }
 
   if (!definition) {
@@ -169,7 +179,7 @@ export default function DefinitionPage() {
                 </div>
               </div>
               <Button
-                variant="outline"
+                variant={hasVoted ? "default" : "outline"}
                 size="sm"
                 onClick={handleVote}
                 className="flex items-center gap-2"
