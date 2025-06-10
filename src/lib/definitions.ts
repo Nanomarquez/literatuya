@@ -20,6 +20,9 @@ export interface Definition {
   wordLowerCase: string;
   raeDefinition?: string;
   literaturiaDefinition: string;
+  etymology?: string;
+  example?: string;
+  curiosities?: string[];
   authorId: string;
   authorName: string;
   authorPhoto?: string;
@@ -50,6 +53,9 @@ export const createDefinition = async (definition: Omit<Definition, 'id' | 'vote
       comments: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      etymology: definition.etymology || '',
+      example: definition.example || '',
+      curiosities: definition.curiosities || [],
     });
     return docRef.id;
   } catch (error) {

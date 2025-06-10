@@ -234,6 +234,32 @@ export default function DefinitionPage() {
               <h3 className="font-semibold mb-2">Definición Literatuya:</h3>
               <p>{definition.literaturiaDefinition}</p>
             </div>
+            {definition.etymology && (
+              <div>
+                <h3 className="font-semibold mb-2">Etimología:</h3>
+                <p className="text-muted-foreground">{definition.etymology}</p>
+              </div>
+            )}
+            {definition.example && (
+              <div>
+                <h3 className="font-semibold mb-2">Ejemplo:</h3>
+                <p className="italic text-muted-foreground">
+                  {definition.example}
+                </p>
+              </div>
+            )}
+            {definition.curiosities && definition.curiosities.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">Curiosidades:</h3>
+                <ul className="list-disc list-inside space-y-2">
+                  {definition.curiosities.map((curiosity, index) => (
+                    <li key={index} className="text-muted-foreground">
+                      {curiosity}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={definition.authorPhoto} />

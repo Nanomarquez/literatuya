@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CuriositiesPage() {
@@ -146,7 +146,7 @@ function CuriosityCard({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle>{curiosity.title}</CardTitle>
-          <Badge variant="outline">{curiosity.likes} ❤️</Badge>
+          {/* <Badge variant="outline">{curiosity.likes} ❤️</Badge> */}
         </div>
         <CardDescription>{curiosity.category}</CardDescription>
       </CardHeader>

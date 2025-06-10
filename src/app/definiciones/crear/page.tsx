@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { createDefinition } from "@/lib/definitions";
+import { Plus, X } from "lucide-react";
 
 const categories = [
   "Palabras bonitas",
@@ -53,6 +54,9 @@ export default function CreateDefinitionPage() {
     raeDefinition: "",
     literaturiaDefinition: "",
     category: "",
+    etymology: "",
+    example: "",
+    curiosities: [""],
   });
 
   const debouncedWord = useDebounce(formData.word, 1000);
@@ -185,11 +189,36 @@ export default function CreateDefinitionPage() {
     }));
   };
 
+  const handleCuriosityChange = (index: number, value: string) => {
+    const newCuriosities = [...formData.curiosities];
+    newCuriosities[index] = value;
+    setFormData((prev) => ({
+      ...prev,
+      curiosities: newCuriosities,
+    }));
+  };
+
+  const addCuriosity = () => {
+    setFormData((prev) => ({
+      ...prev,
+      curiosities: [...prev.curiosities, ""],
+    }));
+  };
+
+  const removeCuriosity = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      curiosities: prev.curiosities.filter((_, i) => i !== index),
+    }));
+  };
+
   return (
     <main className="min-h-screen flex flex-col">
       <Navbar />
       <div className="container mx-auto px-4 py-8 flex-1">
-        <h1 className="text-xl md:text-3xl font-bold mb-8">Crear Nueva Definición</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-8">
+          Crear Nueva Definición
+        </h1>
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
           <div className="space-y-2">
@@ -258,8 +287,70 @@ export default function CreateDefinitionPage() {
             </Select>
           </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creando..." : "Crear Definición"}
+          <div className="space-y-2">
+            <label htmlFor="etymology" className="text-sm font-medium">
+              Etimología
+            </label>
+            <Textarea
+              id="etymology"
+              name="etymology"
+              value={formData.etymology}
+              onChange={handleChange}
+              placeholder="Explica el origen de la palabra"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="example" className="text-sm font-medium">
+              Ejemplo de uso
+            </label>
+            <Textarea
+              id="example"
+              name="example"
+              value={formData.example}
+              onChange={handleChange}
+              placeholder="Escribe un ejemplo de uso de la palabra"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Curiosidades</label>
+            <div className="space-y-4">
+              {formData.curiosities.map((curiosity, index) => (
+                <div key={index} className="flex gap-2">
+                  <Textarea
+                    value={curiosity}
+                    onChange={(e) =>
+                      handleCuriosityChange(index, e.target.value)
+                    }
+                    placeholder="Escribe una curiosidad sobre la palabra"
+                  />
+                  {formData.curiosities.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeCuriosity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addCuriosity}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar curiosidad
+              </Button>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creando..." : "Crear definición"}
           </Button>
         </form>
       </div>
