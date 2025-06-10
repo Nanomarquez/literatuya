@@ -1,8 +1,8 @@
-import Link from "next/link";
+// import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="border-t">
+    <footer className="border-t mb-14">
       <div className="flex-1 container mx-auto p-4 flex items-center justify-between flex-col md:flex-row">
         <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
@@ -10,7 +10,7 @@ export function Footer() {
             reservados.
           </p>
         </div>
-        <div className="flex gap-4">
+        {/* <div className="flex gap-4">
           <Link
             href="/sobre-nosotros"
             className="text-sm text-muted-foreground hover:underline"
@@ -35,7 +35,7 @@ export function Footer() {
           >
             Contacto
           </Link>
-        </div>
+        </div> */}
       </div>
     </footer>
   );

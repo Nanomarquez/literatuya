@@ -102,7 +102,7 @@ export function Navbar() {
           )}
         </div>
       </div>
-      <div className="md:hidden border-t">
+      <div className="md:hidden border-t fixed w-full bottom-0 bg-background">
         <nav className="flex justify-between px-2">
           {navItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
@@ -121,13 +121,6 @@ export function Navbar() {
               </Link>
             );
           })}
-          <Link
-            href="/perfil"
-            className="flex flex-1 flex-col items-center justify-center py-2 text-xs font-medium text-foreground/60 transition-colors hover:text-foreground/80"
-          >
-            <User className="h-5 w-5" />
-            <span>Perfil</span>
-          </Link>
         </nav>
       </div>
     </header>

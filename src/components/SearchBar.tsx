@@ -26,7 +26,7 @@ export function SearchBar() {
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Busca palabras, definiciones o curiosidades..."
+          placeholder="Busca palabras..."
           className="pl-10 pr-20 py-6 text-lg"
         />
         <Button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2">
