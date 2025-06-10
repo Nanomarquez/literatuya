@@ -22,6 +22,8 @@ import {
 } from "@/lib/definitions";
 import { useToast } from "@/hooks/use-toast";
 import Loader from "@/components/Loader";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 interface Comment {
   id: string;
@@ -88,6 +90,21 @@ export default function DefinitionPage() {
           ...definition,
           votes: definition.votes + (voted ? 1 : -1),
         });
+
+        // Crear notificación para el autor de la definición
+        if (voted && definition.authorId !== user.uid) {
+          const notificationsRef = collection(db, "notifications");
+          await addDoc(notificationsRef, {
+            type: "vote",
+            message: `${user.displayName || "Alguien"} votó tu definición de "${
+              definition.word
+            }"`,
+            read: false,
+            createdAt: new Date().toISOString(),
+            userId: definition.authorId,
+            definitionId: id as string,
+          });
+        }
       }
       setHasVoted(voted);
       toast({
@@ -135,6 +152,21 @@ export default function DefinitionPage() {
           ...definition,
           comments: definition.comments + 1,
         });
+
+        // Crear notificación para el autor de la definición
+        if (definition.authorId !== user.uid) {
+          const notificationsRef = collection(db, "notifications");
+          await addDoc(notificationsRef, {
+            type: "comment",
+            message: `${
+              user.displayName || "Alguien"
+            } comentó en tu definición de "${definition.word}"`,
+            read: false,
+            createdAt: new Date().toISOString(),
+            userId: definition.authorId,
+            definitionId: id as string,
+          });
+        }
       }
       toast({
         title: "¡Comentario publicado!",

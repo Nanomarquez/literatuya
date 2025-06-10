@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ModeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { Notifications } from "@/components/Notifications";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -68,7 +69,7 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden md:flex">
+          <div className="flex">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/buscar">
                 <Search className="h-5 w-5" />
@@ -76,18 +77,17 @@ export function Navbar() {
               </Link>
             </Button>
             <ModeToggle />
+            {user && <Notifications />}
           </div>
           {user ? (
             <>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/perfil">
-                  <User className="h-4 w-4 mr-2" />
-                  Perfil
+                  <User className="h-4 w-4" />
                 </Link>
               </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Cerrar sesión
+                <LogOut className="h-4 w-4" />
               </Button>
             </>
           ) : (
