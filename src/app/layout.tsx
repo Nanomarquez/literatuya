@@ -23,16 +23,21 @@ export const metadata: Metadata = {
     "Descubre y comparte desafíos literarios interesantes y auténticos",
   generator: "Next.js",
   applicationName: "Literatuya",
-  keywords: ["literatura", "literatuya", "literatuya.com"],
-  authors: [{ name: "Literatuya", url: "https://literatuya.com" }],
-  creator: "Literatuya",
-  publisher: "Literatuya",
-  metadataBase: new URL("https://literatuya.com"),
+  keywords: ["literatura", "literatuya", "literatuya.vercel.app"],
+  authors: [
+    {
+      name: "Federico Marquez",
+      url: "https://new-portfolio-bynano.vercel.app",
+    },
+  ],
+  creator: "Federico Marquez",
+  publisher: "Federico Marquez",
+  metadataBase: new URL("https://literatuya.vercel.app"),
   openGraph: {
     title: "Literatuya",
     description:
       "Descubre y comparte desafíos literarios interesantes y auténticos",
-    url: "https://literatuya.com",
+    url: "https://literatuya.vercel.app",
     siteName: "Literatuya",
   },
   twitter: {
@@ -40,18 +45,18 @@ export const metadata: Metadata = {
     title: "Literatuya",
     description:
       "Descubre y comparte desafíos literarios interesantes y auténticos",
-    images: ["https://literatuya.com/og-image.png"],
+    images: ["https://literatuya.vercel.app/og-image.png"],
   },
   robots: {
     index: true,
     follow: true,
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icons/icon-192x192.png",
   },
   manifest: "/manifest.json",
   alternates: {
-    canonical: "https://literatuya.com",
+    canonical: "https://literatuya.vercel.app",
   },
 };
 
