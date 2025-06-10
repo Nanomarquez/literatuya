@@ -1,14 +1,35 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Book, BookOpen, Home, Search, Sparkles, User } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ModeToggle } from "@/components/ModeToggle"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Book,
+  BookOpen,
+  Home,
+  Search,
+  Sparkles,
+  User,
+  LogOut,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/ModeToggle";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export function Navbar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
 
   const navItems = [
     { name: "Inicio", href: "/", icon: Home },
@@ -17,7 +38,7 @@ export function Navbar() {
     { name: "Palabra del día", href: "/palabra-del-dia", icon: BookOpen },
     { name: "Adivinanza", href: "/adivinanza", icon: Search },
     { name: "Entretenimiento", href: "/entretenimiento", icon: User },
-  ]
+  ];
 
   return (
     <header className="border-b sticky top-0 z-40 bg-background">
@@ -30,19 +51,19 @@ export function Navbar() {
           </Link>
           <nav className="hidden md:flex gap-6">
             {navItems.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
                     "flex items-center text-sm font-medium transition-colors hover:text-foreground/80",
-                    isActive ? "text-foreground" : "text-foreground/60",
+                    isActive ? "text-foreground" : "text-foreground/60"
                   )}
                 >
                   {item.name}
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
@@ -56,32 +77,49 @@ export function Navbar() {
             </Button>
             <ModeToggle />
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/login">Iniciar sesión</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/registro">Registrarse</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/perfil">
+                  <User className="h-4 w-4 mr-2" />
+                  Perfil
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar sesión
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/login">Iniciar sesión</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/registro">Registrarse</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <div className="md:hidden border-t">
         <nav className="flex justify-between px-2">
           {navItems.slice(0, 4).map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center py-2 text-xs font-medium transition-colors hover:text-foreground/80",
-                  isActive ? "text-foreground" : "text-foreground/60",
+                  isActive ? "text-foreground" : "text-foreground/60"
                 )}
               >
                 <Icon className="h-5 w-5" />
                 <span>{item.name}</span>
               </Link>
-            )
+            );
           })}
           <Link
             href="/perfil"
@@ -93,5 +131,5 @@ export function Navbar() {
         </nav>
       </div>
     </header>
-  )
+  );
 }

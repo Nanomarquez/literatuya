@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import {
@@ -13,60 +16,71 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, ThumbsUp, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { Definition, getDefinitions } from "@/lib/definitions";
+import { useToast } from "@/app/hooks/use-toast";
+
+interface DefinitionFilters {
+  isOfficial?: boolean;
+  trending?: boolean;
+  search?: string;
+}
 
 export default function DefinitionsPage() {
-  // Estos serían datos que vendrían de una base de datos
-  const definitions = [
-    {
-      id: 1,
-      word: "Serendipia",
-      definition:
-        "Hallazgo valioso que se produce de manera accidental o casual.",
-      literaturiaDefinition:
-        "Ese momento mágico cuando encuentras algo genial sin buscarlo, como cuando buscas calcetines y encuentras dinero.",
-      author: "María García",
-      category: "Palabras bonitas",
-      votes: 342,
-      comments: 28,
-      isOfficial: true,
-    },
-    {
-      id: 2,
-      word: "Procrastinear",
-      definition: "No existe en la RAE",
-      literaturiaDefinition:
-        "El arte de convertir 'lo haré en 5 minutos' en 'lo haré mañana' y luego en 'algún día'.",
-      author: "Carlos Ruiz",
-      category: "Comportamiento",
-      votes: 289,
-      comments: 45,
-      isOfficial: false,
-    },
-    {
-      id: 3,
-      word: "Petricor",
-      definition: "Olor que produce la lluvia al caer en suelos secos.",
-      literaturiaDefinition:
-        "El perfume natural que la tierra regala cuando la lluvia la besa después de mucho tiempo.",
-      author: "Ana López",
-      category: "Sensaciones",
-      votes: 256,
-      comments: 19,
-      isOfficial: true,
-    },
-    {
-      id: 4,
-      word: "Cafetearse",
-      definition: "No existe en la RAE",
-      literaturiaDefinition:
-        "Acción de pasar horas en una cafetería fingiendo que trabajas mientras en realidad solo tomas café y observas gente.",
-      author: "Diego Morales",
-      category: "Acciones modernas",
-      votes: 198,
-      comments: 33,
-      isOfficial: false,
-    },
-  ];
+  const [definitions, setDefinitions] = useState<Definition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const fetchDefinitions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const filters: DefinitionFilters = {};
+
+      switch (activeTab) {
+        case "official":
+          filters.isOfficial = true;
+          break;
+        case "community":
+          filters.isOfficial = false;
+          break;
+        case "trending":
+          filters.trending = true;
+          break;
+        // 'all' no necesita filtros
+      }
+
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+
+      const data = await getDefinitions(filters);
+      setDefinitions(data);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las definiciones",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, searchQuery, toast]);
+
+  useEffect(() => {
+    fetchDefinitions();
+  }, [fetchDefinitions]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -74,22 +88,37 @@ export default function DefinitionsPage() {
       <div className="container mx-auto px-4 py-8 flex-1">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Definiciones</h1>
-          <Button asChild>
-            <Link href="/definiciones/crear">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear definición
-            </Link>
-          </Button>
+          {user ? (
+            <Button asChild>
+              <Link href="/definiciones/crear">
+                <Plus className="h-4 w-4 mr-2" />
+                Crear definición
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/login">Inicia sesión para crear</Link>
+            </Button>
+          )}
         </div>
 
         <div className="mb-6">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar definiciones..." className="pl-10" />
+            <Input
+              placeholder="Buscar definiciones..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
           </div>
         </div>
 
-        <Tabs defaultValue="all" className="space-y-6">
+        <Tabs
+          defaultValue="all"
+          className="space-y-6"
+          onValueChange={handleTabChange}
+        >
           <TabsList>
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="official">Oficiales</TabsTrigger>
@@ -98,46 +127,20 @@ export default function DefinitionsPage() {
           </TabsList>
 
           <TabsContent
-            value="all"
+            value={activeTab}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            {definitions.map((def) => (
-              <DefinitionCard key={def.id} definition={def} />
-            ))}
-          </TabsContent>
-
-          <TabsContent
-            value="official"
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {definitions
-              .filter((def) => def.isOfficial)
-              .map((def) => (
+            {loading ? (
+              <div>Cargando...</div>
+            ) : definitions.length === 0 ? (
+              <div className="col-span-2 text-center py-8 text-muted-foreground">
+                No se encontraron definiciones
+              </div>
+            ) : (
+              definitions.map((def) => (
                 <DefinitionCard key={def.id} definition={def} />
-              ))}
-          </TabsContent>
-
-          <TabsContent
-            value="community"
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {definitions
-              .filter((def) => !def.isOfficial)
-              .map((def) => (
-                <DefinitionCard key={def.id} definition={def} />
-              ))}
-          </TabsContent>
-
-          <TabsContent
-            value="trending"
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {definitions
-              .sort((a, b) => b.votes - a.votes)
-              .slice(0, 4)
-              .map((def) => (
-                <DefinitionCard key={def.id} definition={def} />
-              ))}
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -146,21 +149,7 @@ export default function DefinitionsPage() {
   );
 }
 
-function DefinitionCard({
-  definition,
-}: {
-  definition: {
-    id: number;
-    word: string;
-    definition: string;
-    literaturiaDefinition: string;
-    author: string;
-    category: string;
-    votes: number;
-    comments: number;
-    isOfficial: boolean;
-  };
-}) {
+function DefinitionCard({ definition }: { definition: Definition }) {
   return (
     <Link href={`/palabra/${definition.id}`}>
       <Card className="h-full transition-all hover:shadow-md">
@@ -168,7 +157,7 @@ function DefinitionCard({
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl">{definition.word}</CardTitle>
-              <CardDescription>Por {definition.author}</CardDescription>
+              <CardDescription>Por {definition.authorName}</CardDescription>
             </div>
             <div className="flex gap-2">
               {definition.isOfficial ? (
@@ -181,10 +170,10 @@ function DefinitionCard({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {definition.isOfficial && (
+          {definition.raeDefinition && (
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold">RAE:</span>{" "}
-              {definition.definition}
+              {definition.raeDefinition}
             </p>
           )}
           <p className="text-sm">

@@ -1,3 +1,5 @@
+"use client";
+
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import {
@@ -12,6 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, BookOpen, ThumbsUp, Edit } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/app/hooks/use-toast";
 
 export default function ProfilePage() {
   // Estos serían datos que vendrían de una base de datos
@@ -103,6 +111,79 @@ export default function ProfilePage() {
     ],
   };
 
+  const { user, updateUserProfile, getUserProfile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(
+    user?.displayName || null
+  );
+  const [bio, setBio] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    user?.photoURL || null
+  );
+
+  // Cargar datos del perfil al montar el componente
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        if (profile) {
+          setBio(profile.bio || "");
+          setDisplayName(profile.displayName);
+          setPreviewUrl(profile.photoURL);
+        }
+      } catch (error) {
+        console.error("Error al cargar el perfil:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar el perfil",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user, getUserProfile]);
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+
+      // Actualizar perfil
+      await updateUserProfile({
+        displayName,
+        photoURL: previewUrl,
+        bio,
+      });
+
+      setIsEditing(false);
+      toast({
+        title: "Perfil actualizado",
+        description: "Tus cambios se han guardado correctamente",
+      });
+    } catch (error) {
+      console.error("Error al actualizar el perfil:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     // Crear una URL temporal para la vista previa
+  //     const previewUrl = URL.createObjectURL(file);
+  //     setPreviewUrl(previewUrl);
+  //   }
+  // };
+
   return (
     <main className="min-h-screen flex flex-col">
       <Navbar />
@@ -110,60 +191,125 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header del perfil */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 flex flex-col gap-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex flex-col items-center md:items-start">
                   <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage src="/placeholder.svg?height=96&width=96" />
-                    <AvatarFallback className="text-2xl">MG</AvatarFallback>
+                    <AvatarImage src={previewUrl as string} />
+                    <AvatarFallback className="text-2xl">
+                      {user?.displayName?.charAt(0) || "U"}
+                    </AvatarFallback>
                   </Avatar>
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar perfil
-                  </Button>
                 </div>
                 <div className="flex-1 space-y-4">
-                  <div>
-                    <h1 className="text-3xl font-bold">{userProfile.name}</h1>
-                    <p className="text-muted-foreground">
-                      {userProfile.username}
-                    </p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                      <Calendar className="h-4 w-4" />
-                      Se unió en {userProfile.joinDate}
-                    </p>
-                  </div>
-                  <p className="text-muted-foreground">{userProfile.bio}</p>
-
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      {/* <div className="space-y-2">
+                        <Label htmlFor="profileImage">Foto de perfil</Label>
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-24 w-24">
+                            <AvatarImage src={previewUrl as string} />
+                            <AvatarFallback className="text-2xl">
+                              {user?.displayName?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <Input
+                            id="profileImage"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="max-w-xs"
+                          />
+                        </div>
+                      </div> */}
+                      <div className="space-y-2">
+                        <Label htmlFor="displayName">Nombre</Label>
+                        <Input
+                          id="displayName"
+                          value={displayName as string}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Biografía</Label>
+                        <Textarea
+                          id="bio"
+                          value={bio}
+                          onChange={(e) => setBio(e.target.value)}
+                          rows={4}
+                          placeholder="Cuéntanos sobre ti..."
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSaveProfile}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Guardando..." : "Guardar"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsEditing(false);
+                            setPreviewUrl(user?.photoURL || null);
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <h1 className="text-3xl font-bold">
+                          {user?.displayName}
+                        </h1>
+                        <p className="text-muted-foreground">{user?.email}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          <Calendar className="h-4 w-4" />
+                          Se unió en {user?.metadata.creationTime}
+                        </p>
+                      </div>
+                      <p className="text-muted-foreground">{bio}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar perfil
+                      </Button>
+                    </>
+                  )}
                   {/* Stats rápidas */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-rose-500">
-                        {userProfile.stats.totalPoints}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Puntos</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-500">
-                        {userProfile.stats.gamesWon}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Juegos ganados
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-500">
-                        {userProfile.stats.streak}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Racha</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-500">
-                        {userProfile.stats.trophies}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Trofeos</p>
-                    </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-rose-500">
+                    {userProfile.stats.totalPoints}
                   </div>
+                  <p className="text-sm text-muted-foreground">Puntos</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-500">
+                    {userProfile.stats.gamesWon}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Juegos ganados
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-500">
+                    {userProfile.stats.streak}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Racha</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {userProfile.stats.trophies}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Trofeos</p>
                 </div>
               </div>
             </CardContent>
